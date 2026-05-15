@@ -210,7 +210,10 @@ export default function Dashboard() {
                       <td className="px-4 py-3 text-right text-gray-600">{fw > 0 ? `${fw}/14` : '—'}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{putts > 0 ? putts : '—'}</td>
                       <td className="px-4 py-3 text-right">
-                        <button onClick={() => deleteRound(round.id)} className="text-gray-300 hover:text-red-400 text-xs transition-colors">✕</button>
+                        <div className="flex items-center justify-end gap-2">
+                          <a href={`/rounds/${round.id}/edit`} className="text-gray-300 hover:text-blue-400 text-xs transition-colors">Edit</a>
+                          <button onClick={() => deleteRound(round.id)} className="text-gray-300 hover:text-red-400 text-xs transition-colors">✕</button>
+                        </div>
                       </td>
                     </tr>
                   )

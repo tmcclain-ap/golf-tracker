@@ -25,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="font-bold text-lg tracking-tight">Golf Tracker</span>
             <nav className="flex gap-5 text-sm font-medium">
               <a href="/dashboard" className="hover:text-green-200 transition-colors">Dashboard</a>
+              <a href="/trends" className="hover:text-green-200 transition-colors">Trends</a>
               <a href="/rounds/new" className="hover:text-green-200 transition-colors">New Round</a>
             </nav>
           </div>
