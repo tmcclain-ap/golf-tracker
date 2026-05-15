@@ -86,10 +86,16 @@ function getRoundTotal(round: Round): number {
 }
 
 function getRoundVsPar(round: Round): number {
-  const holes = round.hole_scores || []
   const total = getRoundTotal(round)
+  if (round.course_par) return total - round.course_par
+  const holes = round.hole_scores || []
   const par = holes.filter(h => h.score !== null).reduce((sum, h) => sum + HOLE_PARS[h.hole_number - 1], 0)
   return total - par
+}
+
+function getCourseName(round: Round): string {
+  if (round.custom_course_name) return round.custom_course_name
+  return `Turner Hill — ${round.tee_boxes?.name || '—'}`
 }
 
 function formatVsPar(v: number): string {
@@ -111,12 +117,20 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  function loadRounds() {
     fetch('/api/rounds')
       .then(r => r.json())
       .then(data => { setRounds(data); setLoading(false) })
       .catch(() => { setError('Failed to load rounds'); setLoading(false) })
-  }, [])
+  }
+
+  useEffect(() => { loadRounds() }, [])
+
+  async function deleteRound(id: string) {
+    if (!confirm('Delete this round?')) return
+    await fetch(`/api/rounds/${id}`, { method: 'DELETE' })
+    loadRounds()
+  }
 
   if (loading) return <div className="text-center py-16 text-gray-400">Loading...</div>
   if (error) return <div className="text-center py-16 text-red-500">{error}</div>
@@ -165,12 +179,13 @@ export default function Dashboard() {
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Tees</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Course</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">Score</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">vs Par</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">GIR</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">FW</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">Putts</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -186,7 +201,7 @@ export default function Dashboard() {
                       <td className="px-4 py-3 text-gray-800">
                         {new Date(round.played_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{round.tee_boxes?.name || '—'}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{getCourseName(round)}</td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-800">{total || '—'}</td>
                       <td className={`px-4 py-3 text-right font-medium ${vsPar < 0 ? 'text-green-600' : vsPar > 0 ? 'text-red-500' : 'text-gray-600'}`}>
                         {total ? formatVsPar(vsPar) : '—'}
@@ -194,6 +209,9 @@ export default function Dashboard() {
                       <td className="px-4 py-3 text-right text-gray-600">{gir > 0 ? `${gir}/18` : '—'}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{fw > 0 ? `${fw}/14` : '—'}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{putts > 0 ? putts : '—'}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button onClick={() => deleteRound(round.id)} className="text-gray-300 hover:text-red-400 text-xs transition-colors">✕</button>
+                      </td>
                     </tr>
                   )
                 })}

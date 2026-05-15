@@ -13,6 +13,8 @@ export interface Round {
   tee_box_id: string
   played_date: string
   notes: string | null
+  custom_course_name: string | null
+  course_par: number | null
   created_at: string
   tee_boxes: { name: string }
   hole_scores: HoleScore[]

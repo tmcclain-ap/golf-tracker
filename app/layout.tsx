@@ -4,6 +4,16 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Golf Tracker',
   description: 'Track your rounds at Turner Hill',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Golf Tracker',
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

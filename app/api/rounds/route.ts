@@ -5,7 +5,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('rounds')
     .select(`
-      id, tee_box_id, played_date, notes, created_at,
+      id, tee_box_id, played_date, notes, custom_course_name, course_par, created_at,
       tee_boxes(name),
       hole_scores(hole_number, score, putts, fairway_hit, gir, up_and_down_attempt, up_and_down_made)
     `)
@@ -20,15 +20,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { date, teeBoxId, notes, holes } = body
+  const { date, teeBoxId, notes, holes, customCourseName, coursePar } = body
 
   const { data: round, error: roundError } = await supabase
     .from('rounds')
     .insert({
       course_id: TURNER_HILL_COURSE_ID,
-      tee_box_id: teeBoxId,
+      tee_box_id: customCourseName ? null : teeBoxId,
       played_date: date,
       notes: notes || null,
+      custom_course_name: customCourseName || null,
+      course_par: customCourseName ? (coursePar || null) : null,
     })
     .select()
     .single()

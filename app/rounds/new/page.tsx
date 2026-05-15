@@ -213,6 +213,9 @@ export default function NewRound() {
   const today = new Date().toISOString().split('T')[0]
 
   const [date, setDate] = useState(today)
+  const [isOtherCourse, setIsOtherCourse] = useState(false)
+  const [customCourseName, setCustomCourseName] = useState('')
+  const [coursePar, setCoursePar] = useState(72)
   const [teeBoxId, setTeeBoxId] = useState(TEE_BOXES[0].id)
   const [roundType, setRoundType] = useState<'18' | 'front9' | 'back9'>('18')
   const [notes, setNotes] = useState('')
@@ -273,7 +276,7 @@ export default function NewRound() {
       const res = await fetch('/api/rounds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, teeBoxId, notes, holes }),
+        body: JSON.stringify({ date, teeBoxId, notes, holes, customCourseName: isOtherCourse ? customCourseName : null, coursePar: isOtherCourse ? coursePar : null }),
       })
       const data = await res.json()
 
@@ -312,6 +315,25 @@ export default function NewRound() {
             />
           </div>
           <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Course</label>
+            <div className="flex gap-2">
+              {(['Turner Hill', 'Other Course'] as const).map(label => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setIsOtherCourse(label === 'Other Course')}
+                  className={`px-3 py-2 rounded text-sm font-medium border transition-colors ${
+                    (label === 'Other Course') === isOtherCourse
+                      ? 'bg-green-700 text-white border-green-700'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Holes Played</label>
             <div className="flex gap-2">
               {([['18', '18 Holes'], ['front9', 'Front 9'], ['back9', 'Back 9']] as const).map(([val, label]) => (
@@ -330,26 +352,53 @@ export default function NewRound() {
               ))}
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Tees</label>
-            <div className="flex gap-2">
-              {TEE_BOXES.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTeeBoxId(t.id)}
-                  className={`px-3 py-2 rounded text-sm font-medium border transition-colors ${
-                    teeBoxId === t.id
-                      ? 'bg-green-700 text-white border-green-700'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
-                  }`}
-                >
-                  {t.name}
-                </button>
-              ))}
+          {!isOtherCourse && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Tees</label>
+              <div className="flex gap-2">
+                {TEE_BOXES.map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTeeBoxId(t.id)}
+                    className={`px-3 py-2 rounded text-sm font-medium border transition-colors ${
+                      teeBoxId === t.id
+                        ? 'bg-green-700 text-white border-green-700'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
+                    }`}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {isOtherCourse && (
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 min-w-48">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Course Name</label>
+              <input
+                type="text"
+                value={customCourseName}
+                onChange={e => setCustomCourseName(e.target.value)}
+                placeholder="e.g. Myopia Hunt Club"
+                className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Course Par</label>
+              <input
+                type="number"
+                value={coursePar}
+                onChange={e => setCoursePar(parseInt(e.target.value) || 72)}
+                min={27}
+                max={74}
+                className="w-20 border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+              />
             </div>
           </div>
-        </div>
+        )}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Notes (optional)</label>
           <input
