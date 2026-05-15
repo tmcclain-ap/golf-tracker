@@ -96,7 +96,7 @@ function StatChart({ data, dataKey, label, color, formatter }: {
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis dataKey="date" tick={{ fontSize: 10 }} />
           <YAxis tick={{ fontSize: 10 }} tickFormatter={formatter} />
-          <Tooltip formatter={(v: unknown) => [formatter ? formatter(v as number) : v, label]} />
+          <Tooltip formatter={(v) => formatter ? formatter(Number(v)) : String(v)} />
           <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
         </LineChart>
       </ResponsiveContainer>
