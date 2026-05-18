@@ -15,15 +15,19 @@ interface HoleData {
 }
 
 function initHoles(): HoleData[] {
-  return Array.from({ length: 18 }, (_, i) => ({
-    hole_number: i + 1,
-    score: null,
-    putts: null,
-    fairway_hit: null,
-    gir: null,
-    up_and_down_attempt: null,
-    up_and_down_made: null,
-  }))
+  return Array.from({ length: 18 }, (_, i) => {
+    const holeNumber = i + 1
+    const isPar3 = PAR_3_HOLES.has(holeNumber)
+    return {
+      hole_number: holeNumber,
+      score: null,
+      putts: null,
+      fairway_hit: isPar3 ? null : false,
+      gir: false,
+      up_and_down_attempt: false,
+      up_and_down_made: null,
+    }
+  })
 }
 
 function cycleBool(current: boolean | null): boolean | null {

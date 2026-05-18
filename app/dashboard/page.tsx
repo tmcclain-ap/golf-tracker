@@ -116,6 +116,7 @@ export default function Dashboard() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [roundFilter, setRoundFilter] = useState<'all' | '18' | '9'>('all')
 
   function loadRounds() {
     fetch('/api/rounds')
@@ -146,8 +147,15 @@ export default function Dashboard() {
     )
   }
 
-  const stats = computeStats(rounds)
-  const holeAnalysis = computeHoleAnalysis(rounds)
+  const filteredRounds = rounds.filter(r => {
+    const played = (r.hole_scores || []).filter(h => h.score !== null).length
+    if (roundFilter === '9') return played <= 9
+    if (roundFilter === '18') return played > 9
+    return true
+  })
+
+  const stats = computeStats(filteredRounds)
+  const holeAnalysis = computeHoleAnalysis(filteredRounds)
   const hardestHoles = [...holeAnalysis]
     .filter(h => h.rounds > 0)
     .sort((a, b) => b.avgVsPar - a.avgVsPar)
@@ -155,6 +163,16 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Filter */}
+      <div className="flex gap-2">
+        {([['all', 'All Rounds'], ['18', '18 Holes'], ['9', '9 Holes']] as const).map(([val, label]) => (
+          <button key={val} onClick={() => setRoundFilter(val)}
+            className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${roundFilter === val ? 'bg-green-700 text-white border-green-700' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Stats Overview */}
       <div>
         <h2 className="text-lg font-semibold text-gray-700 mb-3">Overview ({stats.roundsCount} rounds)</h2>
@@ -189,12 +207,15 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {rounds.slice(0, 15).map((round, i) => {
+                {filteredRounds.slice(0, 15).map((round, i) => {
                   const total = getRoundTotal(round)
                   const vsPar = getRoundVsPar(round)
                   const holes = round.hole_scores || []
+                  const scoredHoles = holes.filter(h => h.score !== null)
                   const gir = holes.filter(h => h.gir === true).length
+                  const girPossible = scoredHoles.length
                   const fw = holes.filter(h => h.fairway_hit === true).length
+                  const fwPossible = scoredHoles.filter(h => !PAR_3_HOLES.has(h.hole_number)).length
                   const putts = holes.reduce((sum, h) => h.putts ? sum + h.putts : sum, 0)
                   return (
                     <tr key={round.id} className={`border-b border-gray-50 hover:bg-gray-50 ${i % 2 === 0 ? '' : 'bg-gray-50/50'}`}>
@@ -206,8 +227,8 @@ export default function Dashboard() {
                       <td className={`px-4 py-3 text-right font-medium ${vsPar < 0 ? 'text-green-600' : vsPar > 0 ? 'text-red-500' : 'text-gray-600'}`}>
                         {total ? formatVsPar(vsPar) : '—'}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600">{gir > 0 ? `${gir}/18` : '—'}</td>
-                      <td className="px-4 py-3 text-right text-gray-600">{fw > 0 ? `${fw}/14` : '—'}</td>
+                      <td className="px-4 py-3 text-right text-gray-600">{gir > 0 ? `${gir}/${girPossible}` : '—'}</td>
+                      <td className="px-4 py-3 text-right text-gray-600">{fw > 0 ? `${fw}/${fwPossible}` : '—'}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{putts > 0 ? putts : '—'}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">

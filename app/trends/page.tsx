@@ -6,6 +6,7 @@ import { Round } from '@/lib/types'
 import { HOLE_PARS, PAR_3_HOLES } from '@/lib/constants'
 
 type Filter = 'all' | 'last10' | 'last5'
+type RoundType = 'all' | '18' | '9'
 
 interface RoundStat {
   date: string
@@ -108,6 +109,7 @@ export default function Trends() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('all')
+  const [roundType, setRoundType] = useState<RoundType>('all')
 
   useEffect(() => {
     fetch('/api/rounds')
@@ -118,8 +120,16 @@ export default function Trends() {
   if (loading) return <div className="text-center py-16 text-gray-400">Loading...</div>
   if (rounds.length === 0) return <div className="text-center py-16 text-gray-400">No rounds yet to show trends.</div>
 
+  // Apply 9/18 round type filter
+  const typeFilteredRounds = rounds.filter(r => {
+    const played = (r.hole_scores || []).filter(h => h.score !== null).length
+    if (roundType === '9') return played <= 9
+    if (roundType === '18') return played > 9
+    return true
+  })
+
   // Chronological order for charts (oldest first)
-  const allStats = [...rounds].reverse().map(computeRoundStat)
+  const allStats = [...typeFilteredRounds].reverse().map(computeRoundStat)
   const filtered = filter === 'last5' ? allStats.slice(-5) : filter === 'last10' ? allStats.slice(-10) : allStats
 
   // Comparison groups
@@ -140,20 +150,37 @@ export default function Trends() {
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-xl font-bold text-gray-800">Trends</h1>
-        <div className="flex gap-2">
-          {([['all', 'All Rounds'], ['last10', 'Last 10'], ['last5', 'Last 5']] as const).map(([val, label]) => (
-            <button
-              key={val}
-              onClick={() => setFilter(val)}
-              className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
-                filter === val
-                  ? 'bg-green-700 text-white border-green-700'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1">
+            {([['all', 'All'], ['18', '18-Hole'], ['9', '9-Hole']] as const).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => setRoundType(val)}
+                className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
+                  roundType === val
+                    ? 'bg-green-700 text-white border-green-700'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            {([['all', 'All Rounds'], ['last10', 'Last 10'], ['last5', 'Last 5']] as const).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => setFilter(val)}
+                className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
+                  filter === val
+                    ? 'bg-green-700 text-white border-green-700'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
